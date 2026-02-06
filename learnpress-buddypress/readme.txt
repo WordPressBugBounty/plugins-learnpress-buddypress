@@ -2,9 +2,8 @@
 Contributors: thimpress, kendy73, tunnhn, leehld
 Donate link:
 Tags: lms, elearning, e-learning, learning management system, education
-Requires at least: 6.3
-Tested up to: 6.6
-Stable tag: 4.0.2
+Tested up to: 6.9
+Stable tag: 4.0.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -69,6 +68,9 @@ Yes, you can. Please find the documentation for writing an add-on for LearnPress
 1. LearnPress bbPress screenshot
 
 == Changelog ==
+
+= 4.0.3 (2026-01-19) =
+~ Fixed: minor bugs.
 
 = 4.0.2 (2024-04-02) =
 ~ Fixed: minor bugs.

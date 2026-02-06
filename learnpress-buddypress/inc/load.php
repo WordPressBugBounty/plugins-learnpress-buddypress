@@ -7,7 +7,10 @@
  * @version  3.0.0
  */
 
-// Prevent loading this file directly
+use LearnPress\Helpers\Template;
+use LearnPress\TemplateHooks\Profile\ProfileQuizzesTemplate;
+use LearnPress\TemplateHooks\TemplateAJAX;
+
 defined( 'ABSPATH' ) || exit;
 
 if ( ! class_exists( 'LP_Addon_BuddyPress' ) ) {
@@ -15,57 +18,45 @@ if ( ! class_exists( 'LP_Addon_BuddyPress' ) ) {
 	 * Class LP_Addon_BuddyPress.
 	 */
 	class LP_Addon_BuddyPress extends LP_Addon {
-		/**
-		 * @var string
-		 */
-		public $version = LP_ADDON_BUDDYPRESS_VER;
-
-		/**
-		 * @var string
-		 *
-		 * LP Version
-		 */
+		public $version         = LP_ADDON_BUDDYPRESS_VER;
 		public $require_version = LP_ADDON_BUDDYPRESS_REQUIRE_VER;
-
-		/**
-		 * Path file addon.
-		 *
-		 * @var string
-		 */
-		public $plugin_file = LP_ADDON_BUDDYPRESS_FILE;
+		public $plugin_file     = LP_ADDON_BUDDYPRESS_FILE;
+		public $text_domain     = 'learnpress-buddypress';
 
 		/**
 		 * LP_Addon_BuddyPress constructor.
 		 */
 		public function __construct() {
-			if ( ! $this->buddypress_is_active() ) {
-				add_action( 'admin_notices', array( $this, 'admin_notices' ) );
-			} else {
-				parent::__construct();
-				add_action( 'wp_enqueue_scripts', array( $this, 'wp_assets' ) );
-			}
+			parent::__construct();
+			add_action( 'wp_enqueue_scripts', array( $this, 'wp_assets' ) );
+			$this->hooks();
 		}
 
-		/**
-		 * Define constants.
-		 */
-		protected function _define_constants() {
-			define( 'LP_ADDON_BUDDYPRESS_PATH', dirname( LP_ADDON_BUDDYPRESS_FILE ) );
-			define( 'LP_ADDON_BUDDYPRESS_TEMPLATE', LP_ADDON_BUDDYPRESS_PATH . '/templates/' );
+		public static function instance() {
+			static $instance = null;
+			if ( is_null( $instance ) ) {
+				$instance = new self();
+			}
+
+			return $instance;
 		}
 
 		/**
 		 * Includes.
 		 */
 		protected function _includes() {
-			include_once LP_ADDON_BUDDYPRESS_PATH . '/inc/functions.php';
+			include_once $this->plugin_folder_path . '/inc/functions.php';
 		}
 
 		/**
 		 * Init hooks.
 		 */
-		protected function _init_hooks() {
-			add_action( 'wp_loaded', array( $this, 'bp_add_new_item' ) );
+		protected function hooks() {
+			// Check bbPress v12.0+ doesn't trigger this; only runs on v11.x.x and earlier.
+			if ( defined( 'BP_VERSION' ) && version_compare( BP_VERSION, '12.0', '<' ) ) {
+				add_action( 'wp_loaded', array( $this, 'bp_add_new_item' ) );
+			}
+			// Check bbPress v12.0+ doesn't trigger this; only runs on v11.x.x and earlier.
 			add_action( 'bp_setup_admin_bar', array( $this, 'bp_setup_courses_bar' ) );
 			add_action( 'admin_enqueue_scripts', array( $this, 'admin_scripts' ), 0 );
 		}
@@ -77,14 +68,14 @@ if ( ! class_exists( 'LP_Addon_BuddyPress' ) ) {
 			$tabs = apply_filters(
 				'learn-press/buddypress/profile-tabs',
 				array(
-					array(
+					/*array(
 						'name'                    => __( 'Courses', 'learnpress-buddypress' ),
 						'slug'                    => $this->get_tab_courses_slug(),
 						'show_for_displayed_user' => true,
 						'screen_function'         => array( $this, 'bp_tab_content' ),
 						'default_subnav_slug'     => 'all',
 						'position'                => 100,
-					),
+					),*/
 					array(
 						'name'                    => __( 'Quizzes', 'learnpress-buddypress' ),
 						'slug'                    => $this->get_tab_quizzes_slug(),
@@ -151,7 +142,7 @@ if ( ! class_exists( 'LP_Addon_BuddyPress' ) ) {
 		 *
 		 * @return bool|string
 		 */
-		public function bp_get_current_link( $tab = 'courses' ) {
+		/*public function bp_get_current_link( $tab = 'courses' ) {
 			// Determine user to use
 			if ( bp_displayed_user_domain() ) {
 				$user_domain = bp_displayed_user_domain();
@@ -170,7 +161,7 @@ if ( ! class_exists( 'LP_Addon_BuddyPress' ) ) {
 
 			// Link to user courses
 			return trailingslashit( $user_domain . $slug );
-		}
+		}*/
 
 		/**
 		 * Get link.
@@ -181,7 +172,7 @@ if ( ! class_exists( 'LP_Addon_BuddyPress' ) ) {
 		 *
 		 * @return string
 		 */
-		public function bp_get_link( $link, $user_id, $course_id ) {
+		/*public function bp_get_link( $link, $user_id, $course_id ) {
 			// Determine user to use
 			if ( is_null( $user_id ) ) {
 				$course  = get_post( $course_id );
@@ -190,7 +181,7 @@ if ( ! class_exists( 'LP_Addon_BuddyPress' ) ) {
 			$link = bp_core_get_user_domain( $user_id );
 
 			return trailingslashit( $link . 'courses' );
-		}
+		}*/
 
 		/**
 		 * Get profile tab courses slug.
@@ -200,8 +191,8 @@ if ( ! class_exists( 'LP_Addon_BuddyPress' ) ) {
 		public function get_tab_courses_slug() {
 			$slugs = LearnPress::instance()->settings->get( 'profile_endpoints' );
 			$slug  = '';
-			if ( isset( $slugs['profile-courses'] ) ) {
-				$slug = $slugs['profile-courses'];
+			if ( isset( $slugs['courses'] ) ) {
+				$slug = $slugs['courses'];
 			}
 			if ( ! $slug ) {
 				$slug = 'courses';
@@ -218,8 +209,8 @@ if ( ! class_exists( 'LP_Addon_BuddyPress' ) ) {
 		public function get_tab_quizzes_slug() {
 			$slugs = LearnPress::instance()->settings->get( 'profile_endpoints' );
 			$slug  = '';
-			if ( isset( $slugs['profile-quizzes'] ) ) {
-				$slug = $slugs['profile-quizzes'];
+			if ( isset( $slugs['quizzes'] ) ) {
+				$slug = $slugs['quizzes'];
 			}
 			if ( ! $slug ) {
 				$slug = 'quizzes';
@@ -236,8 +227,8 @@ if ( ! class_exists( 'LP_Addon_BuddyPress' ) ) {
 		public function get_tab_orders_slug() {
 			$slugs = LearnPress::instance()->settings->get( 'profile_endpoints' );
 			$slug  = '';
-			if ( isset( $slugs['profile-orders'] ) ) {
-				$slug = $slugs['profile-orders'];
+			if ( isset( $slugs['orders'] ) ) {
+				$slug = $slugs['orders'];
 			}
 			if ( ! $slug ) {
 				$slug = 'orders';
@@ -284,16 +275,31 @@ if ( ! class_exists( 'LP_Addon_BuddyPress' ) ) {
 		 * Tab courses content.
 		 */
 		public function bp_tab_courses_content() {
-			$args = array( 'user' => learn_press_get_current_user() );
-			learn_press_get_template( 'profile/courses.php', $args, learn_press_template_path() . '/addons/buddypress/', LP_ADDON_BUDDYPRESS_PATH . '/templates' );
+			//$args = array( 'user' => learn_press_get_current_user() );
+			//learn_press_get_template( 'profile/courses.php', $args, learn_press_template_path() . '/addons/buddypress/', LP_ADDON_BUDDYPRESS_PATH . '/templates' );
 		}
 
 		/**
 		 * Tab quizzes content.
 		 */
 		public function bp_tab_quizzes_content() {
-			$args = array( 'user' => learn_press_get_current_user() );
-			learn_press_get_template( 'profile/tabs/quizzes.php', $args );
+			$html_wrapper = array(
+				'<div class="learn-press-subtab-content">' => '</div>',
+			);
+			$callback     = array(
+				'class'  => ProfileQuizzesTemplate::class,
+				'method' => 'renderContent',
+			);
+			$args         = array(
+				'id_url'  => 'profile_quizzes',
+				'user_id' => get_current_user_id(),
+				'paged'   => 1,
+				'type'    => 'all',
+			);
+
+			$content = TemplateAJAX::load_content_via_ajax( $args, $callback );
+			$html    = Template::instance()->nest_elements( $html_wrapper, $content );
+			echo $html;
 		}
 
 		/**
@@ -342,47 +348,5 @@ if ( ! class_exists( 'LP_Addon_BuddyPress' ) ) {
 		public function wp_assets() {
 			wp_enqueue_style( 'learn-press-buddypress', plugins_url( '/assets/css/site.css', LP_ADDON_BUDDYPRESS_FILE ) );
 		}
-
-		/**
-		 * Check BuddyPress active.
-		 *
-		 * @return bool
-		 */
-		public function buddypress_is_active() {
-			if ( ! function_exists( 'is_plugin_active' ) ) {
-				include_once( ABSPATH . 'wp-admin/includes/plugin.php' );
-			}
-
-			return class_exists( 'BuddyPress' ) && is_plugin_active( 'buddypress/bp-loader.php' );
-		}
-
-		/**
-		 * Show admin notice when inactive BuddyPress.
-		 */
-		public function admin_notices() {
-			?>
-			<div class="notice notice-error">
-				<p>
-					<?php
-					echo wp_kses(
-						sprintf(
-							__( '<strong>BuddyPress</strong> addon for <strong>LearnPress</strong> requires %s plugin is <strong>installed</strong> and <strong>activated</strong>.', 'learnpress-buddypress' ),
-							sprintf( '<a href="%s" target="_blank">BuddyPress</a>', admin_url( 'plugin-install.php?tab=search&type=term&s=buddypress' ) )
-						),
-						array(
-							'a'      => array(
-								'href'   => array(),
-								'target' => array(),
-							),
-							'strong' => array(),
-						)
-					);
-					?>
-				</p>
-			</div>
-			<?php
-		}
 	}
 }
-
-add_action( 'plugins_loaded', array( 'LP_Addon_BuddyPress', 'instance' ) );

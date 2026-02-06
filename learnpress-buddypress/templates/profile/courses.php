@@ -23,7 +23,7 @@ $limit = apply_filters(
 	LP_Settings::get_option( 'archive_course_limit', 8 )
 );
 
-$profile = learn_press_get_profile();
+$profile = learn_press_get_profile( get_current_user_id() );
 $query   = $_REQUEST['filter'] ?? 'own';
 $filters = array(
 	'own'       => __( 'Own', 'learnpress-buddypress' ),

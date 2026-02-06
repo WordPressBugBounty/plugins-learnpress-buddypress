@@ -1,15 +1,17 @@
 <?php
 /**
  * Plugin Name: LearnPress - BuddyPress Integration
- * Plugin URI: http://thimpress.com/learnpress
+ * Plugin URI: https://thimpress.com/product/learnpress-buddypress-integration/
  * Description: Using the profile system provided by BuddyPress.
  * Author: ThimPress
- * Version: 4.0.2
+ * Version: 4.0.3
  * Author URI: http://thimpress.com
  * Tags: learnpress, lms, add-on, buddypress
  * Text Domain: learnpress-buddypress
  * Domain Path: /languages/
- * Require_LP_Version: 4.2.6
+ * Requires at least: 6.3
+ * Requires PHP: 7.4
+ * Require_LP_Version: 4.3.2.5
  *
  * @package learnpress-buddypress
  */
@@ -78,6 +80,10 @@ class LP_Addon_BuddyPress_Preload {
 			}
 
 			return;
+		} elseif ( ! is_plugin_active( 'buddypress/bp-loader.php' ) ) {
+			add_action( 'admin_notices', array( $this, 'show_note_must_install_buddypress' ) );
+
+			return;
 		}
 
 		// Sure LP loaded.
@@ -89,12 +95,34 @@ class LP_Addon_BuddyPress_Preload {
 	 */
 	public function load() {
 		self::$addon = LP_Addon::load( 'LP_Addon_BuddyPress', 'inc/load.php', __FILE__ );
+		self::$addon = LP_Addon_BuddyPress::instance();
 	}
 
 	public function show_note_errors_require_lp() {
 		?>
 		<div class="notice notice-error">
 			<p><?php echo( 'Please active <strong>LP version ' . LP_ADDON_BUDDYPRESS_REQUIRE_VER . ' or later</strong> before active <strong>' . self::$addon_info['Name'] . '</strong>' ); ?></p>
+		</div>
+		<?php
+	}
+
+	public function show_note_must_install_buddypress() {
+		?>
+		<div class="notice notice-error">
+			<p>
+				<?php
+				printf(
+					__(
+						'<strong>LearnPress - BuddyPress Integration</strong> addon for <strong>LearnPress</strong> requires %s plugin is <strong>installed</strong> and <strong>activated</strong>.',
+						'learnpress-buddypress'
+					),
+					sprintf(
+						'<a href="%s" target="_blank">BuddyPress</a>',
+						admin_url( 'plugin-install.php?tab=search&type=term&s=buddypress' )
+					)
+				);
+				?>
+			</p>
 		</div>
 		<?php
 	}
